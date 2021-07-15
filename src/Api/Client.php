@@ -27,6 +27,11 @@ class Client
      */
     protected $debug;
 
+    /**
+     * @var array
+     */
+    public array $resources = [];
+
     public static function create(array $config): Client
     {
         $client = new Client();
@@ -51,7 +56,7 @@ class Client
     protected function cast(string $className): object
     {
 
-        $instance = new $className;
+        $instance = new $className();
 
         $instance->setHttpClient($this->httpClient);
         $instance->setApiToken($this->apiToken);
@@ -100,7 +105,8 @@ class Client
      * Default auth to put token into header.
      * You can customize your own auth
      */
-    public function applyAuth(array $payload): array {
+    public function applyAuth(array $payload): array
+    {
         $headers = [
             'headers' => [
                 'token' => $this->apiToken,
@@ -110,13 +116,25 @@ class Client
         return array_merge($payload, $headers);
     }
 
-    private function applyMiddlewares(array $payload): array {
+    public function registerResource(string $key, object $instance): void
+    {
+        $this->resources[$key] = $instance;
+    }
+
+    public function __get(string $key): object
+    {
+        return $this->resources[$key];
+    }
+
+    private function applyMiddlewares(array $payload): array
+    {
         $payload = $this->applyDebug($payload);
 
         return $this->applyAuth($payload);
     }
 
-    private function applyDebug(array $payload): array {
+    private function applyDebug(array $payload): array
+    {
         $options = [
             'debug' => $this->debug,
         ];
