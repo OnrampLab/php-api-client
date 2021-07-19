@@ -70,4 +70,20 @@ class ClientTest extends TestCase
         $this->assertEquals(200, $response->getStatusCode());
         $this->assertEquals('Hello, World', $response->getBody());
     }
+
+    /**
+     * @test
+     */
+    public function registerResource_should_work()
+    {
+        $resourceKey = 'myResource';
+        $resource = new \stdClass();
+
+        $this->client->registerResource($resourceKey, $resource);
+
+        $myResource = $this->client->myResource;
+
+        $this->assertEquals($resource, $myResource);
+
+    }
 }
