@@ -30,7 +30,7 @@ class Client
     /**
      * @var array
      */
-    public array $resources = [];
+    protected array $resources = [];
 
     public static function create(array $config): Client
     {
@@ -96,6 +96,7 @@ class Client
         $payload = $this->applyMiddlewares([
             'query' => $params,
             'json' => (object) $data,
+            'headers' => [],
         ]);
 
         return $this->httpClient->request($method, $url, $payload);
@@ -107,13 +108,14 @@ class Client
      */
     public function applyAuth(array $payload): array
     {
-        $headers = [
-            'headers' => [
-                'token' => $this->apiToken,
-            ]
-        ];
+        $payload['query']['token'] = $this->apiToken;
 
-        return array_merge($payload, $headers);
+        return $payload;
+    }
+
+    public function applyMiddleware(array $payload): array
+    {
+        return $payload;
     }
 
     public function registerResource(string $key, object $instance): void
@@ -126,19 +128,19 @@ class Client
         return $this->resources[$key];
     }
 
-    private function applyMiddlewares(array $payload): array
+    protected function applyMiddlewares(array $payload): array
     {
         $payload = $this->applyDebug($payload);
+        $payload = $this->applyAuth($payload);
+        $payload = $this->applyMiddleware($payload);
 
-        return $this->applyAuth($payload);
+        return $payload;
     }
 
-    private function applyDebug(array $payload): array
+    protected function applyDebug(array $payload): array
     {
-        $options = [
-            'debug' => $this->debug,
-        ];
+        $payload['debug'] = $this->debug;
 
-        return array_merge($payload, $options);
+        return $payload;
     }
 }

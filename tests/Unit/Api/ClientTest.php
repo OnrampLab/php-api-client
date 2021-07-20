@@ -65,8 +65,7 @@ class ClientTest extends TestCase
         $request = $container[0]['request'];
 
         $this->assertEquals('POST', $request->getMethod());
-        $this->assertEquals(['fake_token'], $request->getHeader('token'));
-        $this->assertEquals('https://api.test.com/api/test?greeting=hi', (string) $request->getUri());
+        $this->assertEquals('https://api.test.com/api/test?greeting=hi&token=fake_token', (string) $request->getUri());
         $this->assertEquals(200, $response->getStatusCode());
         $this->assertEquals('Hello, World', $response->getBody());
     }
@@ -84,6 +83,30 @@ class ClientTest extends TestCase
         $myResource = $this->client->myResource;
 
         $this->assertEquals($resource, $myResource);
+    }
 
+    /**
+     * @test
+     */
+    public function applyMiddleware_should_work()
+    {
+        $client = new FakeClient();
+        $mock = new MockHandler([
+            new Response(200),
+        ]);
+        $container = [];
+        $history = Middleware::history($container);
+        $handlerStack = HandlerStack::create($mock);
+        $handlerStack->push($history);
+        $httpClient = new HttpClient(['handler' => $handlerStack]);
+        $url = $client->getEndPoint('test');
+        $client->setHttpClient($httpClient);
+
+        $client->request('POST', $url, ['greeting' => 'hi']);
+
+        /** @var Request */
+        $request = $container[0]['request'];
+
+        $this->assertEquals(['fake_header_value'], $request->getHeader('fake_header'));
     }
 }
