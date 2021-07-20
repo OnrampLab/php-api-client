@@ -5,7 +5,7 @@ namespace OnrampLab\ApiClient\Api;
 use GuzzleHttp\Client as HttpClient;
 use Psr\Http\Message\ResponseInterface;
 
-class Client
+class Client implements ClientInterface
 {
     /**
      * @var HttpClient
@@ -32,7 +32,7 @@ class Client
      */
     protected array $resources = [];
 
-    public static function create(array $config): Client
+    public static function create(array $config): ClientInterface
     {
         $client = new Client();
         $client->setHttpClient(new HttpClient());
