@@ -24,8 +24,7 @@ class ClientTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-
-        $this->client = Client::create([
+        $this->client = new Client([
             'apiToken' => 'fake_token',
             'baseUrl' => 'https://api.test.com/api',
         ]);
@@ -90,7 +89,10 @@ class ClientTest extends TestCase
      */
     public function applyMiddleware_should_work()
     {
-        $client = new FakeClient();
+        $client = new FakeClient([
+            'apiToken' => 'fake_token',
+            'baseUrl' => 'https://api.test.com/api',
+        ]);
         $mock = new MockHandler([
             new Response(200),
         ]);

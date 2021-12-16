@@ -32,38 +32,12 @@ class Client implements ClientInterface
      */
     protected array $resources = [];
 
-    public static function create(array $config): ClientInterface
+    public function __construct(array $config)
     {
-        $client = new Client();
-        $client->setHttpClient(new HttpClient());
-        $client->setBaseUrl($config['baseUrl']);
-        $client->setApiToken($config['apiToken']);
-        $client->setDebug($config['debug'] ?? false);
-
-        return $client;
-    }
-
-    /**
-     * This function will take an instance of a PHP stdClass and attempt to cast it to
-     * the type of the specified $className.
-     *
-     * For example, we may pass 'Onramplab\Dummy' as the $className.
-     *
-     * @param string $className the name of the sub class type to which we want to create
-     *
-     * @return object a version of the incoming $instance casted as the specified className
-     */
-    protected function cast(string $className): object
-    {
-
-        $instance = new $className();
-
-        $instance->setHttpClient($this->httpClient);
-        $instance->setApiToken($this->apiToken);
-        $instance->setBaseUrl($this->baseUrl);
-        $instance->setDebug($this->debug);
-
-        return $instance;
+        $this->setHttpClient(new HttpClient());
+        $this->setBaseUrl($config['baseUrl']);
+        $this->setApiToken($config['apiToken']);
+        $this->setDebug($config['debug'] ?? false);
     }
 
     public function setHttpClient(HttpClient $httpClient): void
