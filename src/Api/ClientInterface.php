@@ -7,14 +7,6 @@ use Psr\Http\Message\ResponseInterface;
 
 interface ClientInterface
 {
-    /**
-     * Create a new ClientInterface
-     *
-     * @param  array  $config
-     * @return ClientInterface
-     */
-    public static function create(array $config): ClientInterface;
-
     public function setHttpClient(HttpClient $httpClient): void;
 
     public function setBaseUrl(string $baseUrl): void;
