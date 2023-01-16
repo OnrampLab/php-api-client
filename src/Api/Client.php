@@ -70,7 +70,9 @@ class Client implements ClientInterface
         $payload = $this->applyMiddlewares([
             'query' => $params,
             'json' => (object) $data,
-            'headers' => [],
+            'headers' => [
+                'Accept' => 'application/json',
+            ],
         ]);
 
         return $this->httpClient->request($method, $url, $payload);

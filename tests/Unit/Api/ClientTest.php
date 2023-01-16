@@ -66,6 +66,7 @@ class ClientTest extends TestCase
         $this->assertEquals('POST', $request->getMethod());
         $this->assertEquals('https://api.test.com/api/test?greeting=hi&token=fake_token', (string) $request->getUri());
         $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('application/json', $request->getHeader('Accept')[0]);
         $this->assertEquals('Hello, World', $response->getBody());
     }
 
