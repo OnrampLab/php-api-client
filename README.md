@@ -14,6 +14,19 @@ composer require onramplab/php-api-client
 
 ## Usage
 
+## Exception Architecture
+
+```
+ApiClientException
+  ├── ServiceException
+  └── HttpException
+```
+
+- A `ServiceException` is thrown for 400 level and 500 level errors from third-party service.
+
+- A `HttpException` is thrown when a networking error occurs or too many redirects are followed.
+
+
 ## Testing
 
 Run the tests with:
