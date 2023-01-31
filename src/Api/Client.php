@@ -5,6 +5,8 @@ namespace OnrampLab\ApiClient\Api;
 use GuzzleHttp\Client as HttpClient;
 use GuzzleHttp\Exception\BadResponseException;
 use GuzzleHttp\Exception\GuzzleException;
+use OnrampLab\ApiClient\Exceptions\ApiClientException;
+use OnrampLab\ApiClient\Exceptions\Handler;
 use OnrampLab\ApiClient\Exceptions\HttpException;
 use OnrampLab\ApiClient\Exceptions\ServiceException;
 use Psr\Http\Message\ResponseInterface;
@@ -15,6 +17,11 @@ class Client implements ClientInterface
      * @var HttpClient
      */
     protected $httpClient;
+
+    /**
+     * @var Handler
+     */
+    protected $exceptionHandler;
 
     /**
      * @var string
@@ -39,6 +46,7 @@ class Client implements ClientInterface
     public function __construct(array $config)
     {
         $this->setHttpClient(new HttpClient());
+        $this->setExceptionHandler(new Handler());
         $this->setBaseUrl($config['baseUrl']);
         $this->setApiToken($config['apiToken']);
         $this->setDebug($config['debug'] ?? false);
@@ -47,6 +55,11 @@ class Client implements ClientInterface
     public function setHttpClient(HttpClient $httpClient): void
     {
         $this->httpClient = $httpClient;
+    }
+
+    public function setExceptionHandler(Handler $exceptionHandler): void
+    {
+        $this->exceptionHandler = $exceptionHandler;
     }
 
     public function setBaseUrl(string $baseUrl): void
@@ -72,20 +85,24 @@ class Client implements ClientInterface
     public function request(string $method, string $url, array $params = [], array $data = []): ResponseInterface
     {
         try {
-            $payload = $this->applyMiddlewares([
-                'query' => $params,
-                'json' => (object) $data,
-                'headers' => [
-                    'Accept' => 'application/json',
-                ],
-            ]);
+            try {
+                $payload = $this->applyMiddlewares([
+                    'query' => $params,
+                    'json' => (object) $data,
+                    'headers' => [
+                        'Accept' => 'application/json',
+                    ],
+                ]);
 
-            return $this->httpClient->request($method, $url, $payload);
-        } catch (BadResponseException $exception) {
-            $response = $exception->getResponse();
-            throw new ServiceException($exception->getMessage(), $response->getStatusCode(), $response);
-        } catch (GuzzleException $exception) {
-            throw new HttpException($exception->getMessage());
+                return $this->httpClient->request($method, $url, $payload);
+            } catch (BadResponseException $exception) {
+                $response = $exception->getResponse();
+                throw new ServiceException($exception->getMessage(), $response->getStatusCode(), $response);
+            } catch (GuzzleException $exception) {
+                throw new HttpException($exception->getMessage());
+            }
+        } catch (ApiClientException $exception) {
+            throw $this->exceptionHandler->wrap($exception);
         }
     }
 
