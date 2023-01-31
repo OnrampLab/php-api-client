@@ -2,13 +2,18 @@
 
 namespace OnrampLab\ApiClient\Tests\Unit\Api;
 
+use Mockery;
 use GuzzleHttp\Client as HttpClient;
+use GuzzleHttp\Exception\ClientException;
+use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7\Request;
 use OnrampLab\ApiClient\Api\Client;
+use OnrampLab\ApiClient\Exceptions\HttpException;
+use OnrampLab\ApiClient\Exceptions\ServiceException;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -68,6 +73,60 @@ class ClientTest extends TestCase
         $this->assertEquals(200, $response->getStatusCode());
         $this->assertEquals('application/json', $request->getHeader('Accept')[0]);
         $this->assertEquals('Hello, World', $response->getBody());
+    }
+
+    /**
+     * @test
+     */
+    public function request_should_throw_service_exception()
+    {
+        $httpClient = Mockery::mock(HttpClient::class);
+        $httpClient
+            ->shouldReceive('request')
+            ->once()
+            ->andThrow(new ClientException(
+                'Client Error: `GET /` resulted in a `404 Not Found` response',
+                new Request('GET', '/'),
+                new Response(404),
+            ));
+
+        $this->client->setHttpClient($httpClient);
+
+        $url = $this->client->getEndPoint();
+
+        try {
+            $this->client->request('GET', $url);
+        } catch (ServiceException $exception) {
+            $this->assertEquals('Client Error: `GET /` resulted in a `404 Not Found` response', $exception->getMessage());
+            $this->assertEquals(404, $exception->getCode());
+            $this->assertNotNull($exception->getResponse());
+        }
+    }
+
+    /**
+     * @test
+     */
+    public function request_should_throw_http_exception()
+    {
+        $httpClient = Mockery::mock(HttpClient::class);
+        $httpClient
+            ->shouldReceive('request')
+            ->once()
+            ->andThrow(new ConnectException(
+                'Connection refused',
+                new Request('GET', '/'),
+                null,
+            ));
+
+        $this->client->setHttpClient($httpClient);
+
+        $url = $this->client->getEndPoint();
+
+        try {
+            $this->client->request('GET', $url);
+        } catch (HttpException $exception) {
+            $this->assertEquals('Connection refused', $exception->getMessage());
+        }
     }
 
     /**
