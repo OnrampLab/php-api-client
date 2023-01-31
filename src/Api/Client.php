@@ -3,6 +3,10 @@
 namespace OnrampLab\ApiClient\Api;
 
 use GuzzleHttp\Client as HttpClient;
+use GuzzleHttp\Exception\BadResponseException;
+use GuzzleHttp\Exception\GuzzleException;
+use OnrampLab\ApiClient\Exceptions\HttpException;
+use OnrampLab\ApiClient\Exceptions\ServiceException;
 use Psr\Http\Message\ResponseInterface;
 
 class Client implements ClientInterface
@@ -67,15 +71,22 @@ class Client implements ClientInterface
 
     public function request(string $method, string $url, array $params = [], array $data = []): ResponseInterface
     {
-        $payload = $this->applyMiddlewares([
-            'query' => $params,
-            'json' => (object) $data,
-            'headers' => [
-                'Accept' => 'application/json',
-            ],
-        ]);
+        try {
+            $payload = $this->applyMiddlewares([
+                'query' => $params,
+                'json' => (object) $data,
+                'headers' => [
+                    'Accept' => 'application/json',
+                ],
+            ]);
 
-        return $this->httpClient->request($method, $url, $payload);
+            return $this->httpClient->request($method, $url, $payload);
+        } catch (BadResponseException $exception) {
+            $response = $exception->getResponse();
+            throw new ServiceException($exception->getMessage(), $response->getStatusCode(), $response);
+        } catch (GuzzleException $exception) {
+            throw new HttpException($exception->getMessage());
+        }
     }
 
     /**
